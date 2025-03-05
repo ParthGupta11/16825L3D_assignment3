@@ -8,10 +8,7 @@ from pytorch3d.renderer.cameras import CamerasBase
 
 # Sampler which implements stratified (uniform) point sampling along rays
 class StratifiedRaysampler(torch.nn.Module):
-    def __init__(
-        self,
-        cfg
-    ):
+    def __init__(self, cfg):
         super().__init__()
 
         self.n_pts_per_ray = cfg.n_pts_per_ray
@@ -23,10 +20,21 @@ class StratifiedRaysampler(torch.nn.Module):
         ray_bundle,
     ):
         # TODO (Q1.4): Compute z values for self.n_pts_per_ray points uniformly sampled between [near, far]
-        z_vals = None
+        z_vals = self.min_depth + (self.max_depth - self.min_depth) * torch.rand(
+            self.n_pts_per_ray
+        ).to(ray_bundle.origins.device)
+        z_vals = z_vals.view(-1, 1)
 
         # TODO (Q1.4): Sample points from z values
-        sample_points = None
+        # sample_points = None
+        sample_points = []
+        for i in range(ray_bundle.origins.shape[0]):
+            origs = ray_bundle.origins[i].repeat(self.n_pts_per_ray, 1)
+            dirs = ray_bundle.directions[i].repeat(self.n_pts_per_ray, 1)
+            pts = origs + (dirs * z_vals)
+            sample_points.append(pts)
+
+        sample_points = torch.stack(sample_points, dim=0)
 
         # Return
         return ray_bundle._replace(
@@ -35,6 +43,4 @@ class StratifiedRaysampler(torch.nn.Module):
         )
 
 
-sampler_dict = {
-    'stratified': StratifiedRaysampler
-}
+sampler_dict = {"stratified": StratifiedRaysampler}

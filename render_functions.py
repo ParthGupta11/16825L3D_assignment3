@@ -112,6 +112,7 @@ def render_points(filename, points, image_size=256, color=[0.7, 0.7, 1], device=
     # The .cpu moves the tensor to GPU (if needed).
     return rend
 
+
 def render_points_with_save(
     points,
     cameras,
