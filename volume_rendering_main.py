@@ -114,11 +114,10 @@ def render_images(model, cameras, image_size, save=False, file_prefix=""):
             depth_map = np.array(
                 out["depth"].view(image_size[1], image_size[0]).detach().cpu()
             )
-            # depth_map = (depth_map - np.min(depth_map)) / (np.max(depth_map) - np.min(depth_map))
-            plt.imsave(f"depth_map_{cam_idx}.png", depth_map, cmap="plasma")
+            depth_map = depth_map / np.max(depth_map)
+            plt.imsave(f"depth_map_{cam_idx}.png", depth_map)
 
         # Save
-        # if save:
         if save:
             plt.imsave(f"{file_prefix}_{cam_idx}.png", image)
 

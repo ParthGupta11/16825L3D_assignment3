@@ -79,18 +79,11 @@ class VolumeRenderer(torch.nn.Module):
 
             # TODO (1.5): Render (color) features using weights
             weighted_features = weights * feature.view(-1, n_pts, 3)
-            # feature = weighted_features.view(-1, 3)
             feature = torch.sum(weighted_features, dim=1)
 
             # TODO (1.5): Render depth map
-            depth = torch.zeros((weighted_features.shape[0], 1))
-            for i in range(density.view(-1, n_pts, 1).shape[0]):
-                density_i = density.view(-1, n_pts)[i, :]
-                non_zero_indices = torch.nonzero(density_i, as_tuple=True)[0]
-                smallest_index = (
-                    non_zero_indices[0] if non_zero_indices.numel() > 0 else (n_pts - 1)
-                )
-                depth[i, :] = depth_values[i, smallest_index]
+            weighted_depth = weights * depth_values.view(-1, n_pts, 1)
+            depth = torch.sum(weighted_depth, dim=1)
 
             pass
 
