@@ -18,18 +18,18 @@ class VolumeRenderer(torch.nn.Module):
     def _compute_weights(self, deltas, rays_density: torch.Tensor, eps: float = 1e-10):
         # TODO (1.5): Compute transmittance using the equation described in the README
         T_all = torch.zeros(deltas.shape[:2]).to(rays_density.device)
+        T_previous = torch.ones_like(T_all[:, 0:1]) 
         for i in range(T_all.shape[1]):
             if i == 0:  # First section
-                T_all[:, i] = 1
-                continue
-            T_all[:, i : i + 1] = T_all[:, i - 1 : i] * torch.exp(
-                -rays_density[:, i - 1] * deltas[:, i - 1]
-            )
+                T_all[:, i:i+1] = T_previous
+            else:
+                T_previous = T_previous * torch.exp(
+                    -rays_density[:, i - 1] * deltas[:, i - 1]
+                )
+                T_all[:, i:i+1] = T_previous
+
 
         # TODO (1.5): Compute weight used for rendering from transmittance and alpha
-        # weights = torch.zeros_like(T_all, device=T_all.device)
-        # for i in range(weights.shape[1]):
-        #     weights[:, i:i+1] = T_all[:, i:i+1] * (1 - torch.exp(-rays_density[:, i] * deltas[:, i]))
         weights = T_all.unsqueeze(-1) * (1 - torch.exp(-rays_density * deltas))
         return weights
 
