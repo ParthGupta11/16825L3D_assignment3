@@ -173,6 +173,8 @@ def train(cfg):
     # Train
     t_range = tqdm.tqdm(range(cfg.training.num_epochs))
 
+    torch.autograd.set_detect_anomaly(True)
+
     for epoch in t_range:
         for iteration, batch in enumerate(train_dataloader):
             image, camera, camera_idx = batch[0].values()
@@ -184,13 +186,13 @@ def train(cfg):
                 cfg.training.batch_size, image_size, camera
             )  # TODO (Q2.1): implement in ray_utils.py
             ray_bundle = get_rays_from_pixels(xy_grid, image_size, camera)
-            rgb_gt = sample_images_at_xy(image, xy_grid)
+            rgb_gt = sample_images_at_xy(image, xy_grid.to(image.device))
 
             # Run model forward
             out = model(ray_bundle)
 
             # TODO (Q2.2): Calculate loss
-            loss = None
+            loss = torch.mean(torch.square(out["feature"] - rgb_gt))
 
             # Backprop
             optimizer.zero_grad()
