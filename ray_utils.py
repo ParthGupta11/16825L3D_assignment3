@@ -127,7 +127,7 @@ def get_rays_from_pixels(xy_grid, image_size, camera):
     # TODO (Q1.3): Map pixels to points on the image plane at Z=1
     projection_tf = camera.get_projection_transform()
     inv_tf = projection_tf.inverse()
-    xy_grid_homo = torch.hstack((xy_grid, torch.ones((xy_grid.shape[0], 1)))).to(camera.device)
+    xy_grid_homo = torch.hstack((xy_grid.to(camera.device), torch.ones((xy_grid.shape[0], 1), device=camera.device))).to(camera.device)
     ndc_points = inv_tf.transform_points(xy_grid_homo)
     ndc_points = ndc_points[:, :2] # skip that last column of ones
 

@@ -288,6 +288,8 @@ def create_model(cfg):
 
 
 def train_nerf(cfg):
+    torch.cuda.synchronize()
+
     # Create model
     model, optimizer, lr_scheduler, start_epoch, checkpoint_path = create_model(cfg)
 
@@ -317,7 +319,7 @@ def train_nerf(cfg):
             # Sample rays
             xy_grid = get_random_pixels_from_image(
                 cfg.training.batch_size, cfg.data.image_size, camera
-            )
+            ).to(device=image.device)
             ray_bundle = get_rays_from_pixels(xy_grid, cfg.data.image_size, camera)
             rgb_gt = sample_images_at_xy(image, xy_grid)
 
@@ -325,7 +327,19 @@ def train_nerf(cfg):
             out = model(ray_bundle)
 
             # TODO (Q3.1): Calculate loss
-            loss = None
+            # loss = torch.mean(torch.square(out["feature"] - rgb_gt))
+            loss = torch.nn.functional.mse_loss(out["feature"], rgb_gt)
+
+            # Save image
+            img = Image.fromarray(
+                (out["feature"] * 255)
+                .cpu()
+                .detach()
+                .numpy()
+                .astype(np.uint8)
+                .reshape(32, 32, 3)
+            )
+            img.save("test_img.jpg")
 
             # Take the training step.
             optimizer.zero_grad()
