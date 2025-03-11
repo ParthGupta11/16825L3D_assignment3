@@ -25,3 +25,7 @@ Depth Visualization using Depth Map
 Optimized volume gif
 
 ![optimized volume gif](images/part_2.gif)
+
+### 3. Optimizing a Neural Radiance Field (NeRF)
+
+![NeRF Prediction](images/part_3_nerf_without_dir.gif)
