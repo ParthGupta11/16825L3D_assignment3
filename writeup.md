@@ -45,10 +45,16 @@ Results for High Resolution Materials Data
 
 ## B. Neural Surface Rendering
 
-#### Sphere Tracing
+### 5. Sphere Tracing
 
 ![Sphere Tracing](images/part_5.gif)
 
 Writeup describing your implementation - 
 
 For each ray, I initialize a length equal to "self.near" and calculate the points on that ray as the ray_origin + length * ray_direction. Then, for each ray's point, I calculate the values of SDF and then increment the lengths of each ray with their respective length. I repeat this process arbitrary number of times. After the repetition, I calculate the final sdf values for each of the rays. If the sdf values are below the threshold, I mark that as a hit in the mask.
+
+### 6. Optimizing a Neural SDF
+
+| Input GIF | Final GIF|
+|-----------|----------|
+|![InputGif](images/part_6_input.gif)|![InputGif](images/part_6.gif)|
