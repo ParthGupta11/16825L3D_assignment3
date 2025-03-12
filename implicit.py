@@ -274,6 +274,8 @@ class MLPWithInputSkips(torch.nn.Module):
 
 # TODO (Q3.1): Implement NeRF MLP
 class NeuralRadianceField(torch.nn.Module):
+    USE_DIRS = True
+
     def __init__(
         self,
         cfg,
@@ -307,8 +309,12 @@ class NeuralRadianceField(torch.nn.Module):
 
         self.density_hidden_layer[0].bias.data[:] = 0.0
 
+        input_colour_feature_dim = cfg.n_hidden_neurons_xyz
+        if self.USE_DIRS:
+            input_colour_feature_dim += embedding_dim_dir
+
         self.colour_hidden_layer = nn.Sequential(
-            nn.Linear(cfg.n_hidden_neurons_xyz, cfg.n_hidden_neurons_xyz),
+            nn.Linear(input_colour_feature_dim, cfg.n_hidden_neurons_xyz),
             nn.ReLU(),
             nn.Linear(cfg.n_hidden_neurons_xyz, cfg.n_hidden_neurons_dir),
             nn.ReLU(),
@@ -321,8 +327,13 @@ class NeuralRadianceField(torch.nn.Module):
     def forward(self, ray_bundle):
         # Produce colour and density for each sample point in ray_bundle
         sample_points = ray_bundle.sample_points.view(-1, 3)
+        sample_dirs = ray_bundle.directions.repeat_interleave(
+            ray_bundle.sample_points.shape[1], dim=0
+        )
 
         sample_pts_embedding = self.harmonic_embedding_xyz(sample_points)
+        sample_dirs_embedding = self.harmonic_embedding_dir(sample_dirs)
+
         features = self.mlp_xyz(sample_pts_embedding, sample_pts_embedding)
 
         # Calculate densities
@@ -330,7 +341,11 @@ class NeuralRadianceField(torch.nn.Module):
         # density = density + torch.randn_like(density) * self.density_noise_std
 
         # Calculate Color
-        rgb = self.colour_hidden_layer(features)
+        if self.USE_DIRS:
+            features_colour = torch.cat((features, sample_dirs_embedding), dim=1)
+        else:
+            features_colour = features
+        rgb = self.colour_hidden_layer(features_colour)
 
         out = {"density": density, "feature": rgb}
 
