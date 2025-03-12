@@ -33,8 +33,8 @@ class VolumeRenderer(torch.nn.Module):
         return weights
 
     def _aggregate(self, weights: torch.Tensor, rays_feature: torch.Tensor):
-        # TODO (1.5): Aggregate (weighted sum of) features using weights
-        pass
+        weighted_features = weights * rays_feature.view(-1, weights.shape[1], 3)
+        feature = torch.sum(weighted_features, dim=1)
 
         return feature
 
@@ -77,8 +77,9 @@ class VolumeRenderer(torch.nn.Module):
             )
 
             # TODO (1.5): Render (color) features using weights
-            weighted_features = weights * feature.view(-1, n_pts, 3)
-            feature = torch.sum(weighted_features, dim=1)
+            # weighted_features = weights * feature.view(-1, n_pts, 3)
+            # feature = torch.sum(weighted_features, dim=1)
+            feature = self._aggregate(weights, feature)
 
             # TODO (1.5): Render depth map
             weighted_depth = weights * depth_values.view(-1, n_pts, 1)
@@ -137,47 +138,13 @@ class SphereTracingRenderer(torch.nn.Module):
         #   indicating which points hit the surface, and which do not
         # n_rays = origins.shape[0]
         epsilon = 1e-6
-        # intersections = torch.ones_like(origins) * self.far
-        # mask = torch.zeros((n_rays, 1), dtype=torch.bool, device=origins.device)
-        # distances = torch.ones((n_rays, 1), device=origins.device) * self.near
         distances = self.near
-
 
         for i in range(self.max_iters):
             points = origins + distances * directions
             distances = distances + implicit_fn(points)
-        
+
         mask = implicit_fn(points) < epsilon
-        # print(mask)
-        
-        # for i in range(n_rays):
-        #     dist = self.near
-        #     pt = origins[i] + dist * directions[i]
-        #     sdf_val = implicit_fn(pt)
-        #     has_found_surface = True
-
-        #     # print(f"i: {i}")
-
-        #     # j = 0
-        #     while sdf_val > epsilon:
-        #         dist += sdf_val
-
-        #         # print(f"j: {j}")
-        #         # j = j + 1
-
-        #         if dist > self.far * 10:
-        #             has_found_surface = False
-        #             break
-
-        #         pt = origins[i] + dist * directions[i]
-        #         sdf_val = implicit_fn(pt)
-
-        #     dist = dist if has_found_surface else self.far
-        #     intersection_pt = origins[i] + dist * directions[i]
-        #     intersections[i] = intersection_pt
-
-        #     if has_found_surface:
-        #         mask[i] = True
 
         return points, mask
 
@@ -219,7 +186,13 @@ class SphereTracingRenderer(torch.nn.Module):
 
 def sdf_to_density(signed_distance, alpha, beta):
     # TODO (Q7): Convert signed distance to density with alpha, beta parameters
-    pass
+    sdf_temp = -signed_distance
+    density = torch.zeros_like(sdf_temp)
+    positive_mask = sdf_temp > 0
+    density[positive_mask] = alpha * (1 - 0.5 * torch.exp(-sdf_temp[positive_mask] / beta))
+    density[~positive_mask] = alpha * (0.5 * torch.exp(sdf_temp[~positive_mask] / beta))
+    return density
+    
 
 
 class VolumeSDFRenderer(VolumeRenderer):
@@ -252,7 +225,8 @@ class VolumeSDFRenderer(VolumeRenderer):
             distance, color = implicit_fn.get_distance_color(
                 cur_ray_bundle.sample_points
             )
-            density = None  # TODO (Q7): convert SDF to density
+            density = sdf_to_density(distance, self.alpha, self.beta)  # TODO (Q7): convert SDF to density
+            
 
             # Compute length of each ray segment
             depth_values = cur_ray_bundle.sample_lengths[..., 0]
