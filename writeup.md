@@ -29,3 +29,24 @@ Optimized volume gif
 ### 3. Optimizing a Neural Radiance Field (NeRF)
 
 ![NeRF Prediction](images/part_3_nerf_without_dir.gif)
+
+
+### 4. NeRF Extras
+
+#### 4.1 View Dependence
+
+Results for High Resolution Lego Data
+![NeRF Predictions for High Resolution Lego](images/part_3_nerf_w_dir_legohighres.gif)
+
+Results for High Resolution Materials Data
+![NeRF Predictions for High Resolution Lego](images/part_3_nerf_w_dir_materialshighres.gif)
+
+## B. Neural Surface Rendering
+
+#### Sphere Tracing
+
+![Sphere Tracing](images/part_5.gif)
+
+Writeup describing your implementation - 
+
+For each ray, I initialize a length equal to "self.near" and calculate the points on that ray as the ray_origin + length * ray_direction. Then, for each ray's point, I calculate the values of SDF and then increment the lengths of each ray with their respective length. I repeat this process arbitrary number of times. After the repetition, I calculate the final sdf values for each of the rays. If the sdf values are below the threshold, I mark that as a hit in the mask.
