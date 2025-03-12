@@ -35,6 +35,8 @@ Optimized volume gif
 
 #### 4.1 View Dependence
 
+Discuss the trade-offs between increased view dependence and generalization quality -
+
 Results for High Resolution Lego Data
 ![NeRF Predictions for High Resolution Lego](images/part_3_nerf_w_dir_legohighres.gif)
 
