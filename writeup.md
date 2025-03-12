@@ -58,3 +58,14 @@ For each ray, I initialize a length equal to "self.near" and calculate the point
 | Input GIF | Final GIF|
 |-----------|----------|
 |![InputGif](images/part_6_input.gif)|![InputGif](images/part_6.gif)|
+
+
+### 7. VolSDF
+
+1. How does high beta bias your learned SDF? What about low beta?
+2. Would an SDF be easier to train with volume rendering and low beta or high beta? Why?
+3. Would you be more likely to learn an accurate surface with high beta or low beta? Why?
+
+![Geometry](images/part_7_geometry_bkp.gif)
+
+![Render](images/part_7_bkp.gif)
