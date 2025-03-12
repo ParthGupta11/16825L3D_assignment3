@@ -135,41 +135,51 @@ class SphereTracingRenderer(torch.nn.Module):
         #   in order to compute intersection points of rays with the implicit surface
         # 2) Maintain a mask with the same batch dimension as the ray origins,
         #   indicating which points hit the surface, and which do not
-        n_rays = origins.shape[0]
-        epsilon = 0.1
-        intersections = torch.ones_like(origins) * self.far
-        mask = torch.zeros((n_rays, 1), dtype=torch.bool)
+        # n_rays = origins.shape[0]
+        epsilon = 1e-6
+        # intersections = torch.ones_like(origins) * self.far
+        # mask = torch.zeros((n_rays, 1), dtype=torch.bool, device=origins.device)
+        # distances = torch.ones((n_rays, 1), device=origins.device) * self.near
+        distances = self.near
 
-        for i in range(n_rays):
-            dist = self.near
-            pt = origins[i] + dist * directions[i]
-            sdf_val = implicit_fn(pt)
-            has_found_surface = True
 
-            # print(f"i: {i}")
+        for i in range(self.max_iters):
+            points = origins + distances * directions
+            distances = distances + implicit_fn(points)
+        
+        mask = implicit_fn(points) < epsilon
+        # print(mask)
+        
+        # for i in range(n_rays):
+        #     dist = self.near
+        #     pt = origins[i] + dist * directions[i]
+        #     sdf_val = implicit_fn(pt)
+        #     has_found_surface = True
 
-            # j = 0
-            while sdf_val > epsilon:
-                dist += sdf_val
+        #     # print(f"i: {i}")
 
-                # print(f"j: {j}")
-                # j = j + 1
+        #     # j = 0
+        #     while sdf_val > epsilon:
+        #         dist += sdf_val
 
-                if dist > self.far * 10:
-                    has_found_surface = False
-                    break
+        #         # print(f"j: {j}")
+        #         # j = j + 1
 
-                pt = origins[i] + dist * directions[i]
-                sdf_val = implicit_fn(pt)
+        #         if dist > self.far * 10:
+        #             has_found_surface = False
+        #             break
 
-            dist = dist if has_found_surface else self.far
-            intersection_pt = origins[i] + dist * directions[i]
-            intersections[i] = intersection_pt
+        #         pt = origins[i] + dist * directions[i]
+        #         sdf_val = implicit_fn(pt)
 
-            if has_found_surface:
-                mask[i] = True
+        #     dist = dist if has_found_surface else self.far
+        #     intersection_pt = origins[i] + dist * directions[i]
+        #     intersections[i] = intersection_pt
 
-        return intersections, mask
+        #     if has_found_surface:
+        #         mask[i] = True
+
+        return points, mask
 
     def forward(self, sampler, implicit_fn, ray_bundle, light_dir=None):
         B = ray_bundle.shape[0]
